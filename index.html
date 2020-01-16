@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>就诊首页</title>
+  <style>
+    #container {
+      width: 850px;
+    }
+
+    #left {
+      border: 1px solid #090;
+      width: 223px;
+      float: left;
+      height: 530px;
+      margin-right: 5px;
+    }
+
+    #left p {
+      cursor: pointer;
+    }
+
+    #right {
+      border: 1px solid #66ceff;
+      width: 600px;
+      float: left;
+      height: 530px;
+    }
+  </style>
+  <script type="text/javascript" src="js/public.js"></script>
+  <script>
+    $.addEvent({
+      elem: window,
+      eventType: 'load',
+      func: function () {
+        let img1 = new Image();
+        img1.src = 'img/qrCodeloading.gif';
+        let left = document.getElementById("left");
+        let right = document.getElementById("right");
+        left.appendChild(img1);
+        right.appendChild(img1.cloneNode(true));
+        // 这个index是干啥用的,记录正在就诊的患者id
+        // let index = 0;
+        let str = '';
+        $.ajax({
+          url: 'http://www.qiuhang.club:7300/mock/5e202b0e00fbdf09dcf21f71/diagaosis/patient',
+          header: 'json',
+          data: `{"hospitalId":"10001","stffId":"2002","departId":"201"}`,
+          dataType: 'json',
+          method: 'POST',
+          success: function (data) {
+            let resData = data.data;
+            console.log(resData);
+            let regVisitedState = '';
+            for (const key in resData) {
+              if (resData.hasOwnProperty(key)) {
+                const element = resData[key];
+                console.log(element);
+                switch (element.regVisitedState) {
+                  case 0:
+                    element.regVisitedState = '待诊';
+                    break;
+                  case 1:
+                    element.regVisitedState = '接诊中';
+                    break;
+                  case 2:
+                    element.regVisitedState = '接诊完成';
+                    break;
+                }
+                str +=
+                  `<p data-id=${element.id}>${element.id},${element.patName}(${element.regVisitedState})</p>`
+              }
+            }
+            left.innerHTML = str;
+          },
+          // 可以先做排序,默认显示第一个
+          // 顺序,先出来左侧的,数据+dom
+          //然后出来右侧的数据+dom,绑定的是click事件,只有点击了才能渲染
+          //这个时候应该那第一个人的
+          // 页面加载完成之后载入默认的右侧信息,显示正在就诊的人员信息
+          complete: function () {
+            console.log(1);
+            let p = left.getElementsByTagName('p');
+            console.log(p);
+
+            for (let i = 0; i < p.length; i++) {
+              $.addEvent({
+                elem: p[i],
+                // 我懵了,绑定的是click事件,点击才能触发
+                eventType: 'click',
+                func: function () {
+                  $.ajax({
+                    url: 'http://www.qiuhang.club:7300/mock/5e202b0e00fbdf09dcf21f71/diagaosis/detail',
+                    method: "POST",
+                    header: "json",
+                    data: '{"patientId":' + this.getAttribute("data-id") + '}',
+                    dataType: 'json',
+                    success: function (data) {
+                      console.log(data);
+                      str = "<ul>";
+                      str += "<li>姓名:" + data.patName + "</li>";
+                      str += "<li>性别:" + data.patSex + "</li>";
+                      str += "<li>出生年月:" + data.patBirthday + "</li>";
+                      str += "<li>病人性质:" + data.natureId + "</li>";
+                      str += "<li>身份证号:" + data.patIdentityNum + "</li>";
+                      str += "<li>家庭住址:" + data.patFamAddress + "</li>";
+                      str += "<li>家庭邮编:" + data.patPostcode + "</li>";
+                      str += "<li>联系人电话:" + data.patContactPhone + "</li>";
+                      str += "<li>联系人:" + data.patContacts + "</li>";
+                      str += "<li>联系电话:" + data.patPhone + "</li>";
+                      str += "<li>就职单位名称:" + data.patWorkUnit + "</li>";
+                      str += "<li>职业:" + data.patWorkUnit + "</li>";
+                      str += "<li>就职单位名称:" + data.patOperation + "</li>";
+                      str += "<li>国籍:" + data.patCountry + "</li>";
+                      str += "<li>民族:" + data.patNationality + "</li>";
+                      str += "<li>婚姻状况:" + data.patMatrimony + "</li>";
+                      str += "<li>既往史:" + data.patHisPrevious + "</li>";
+                      str += "<li>过敏史:" + data.patHisAllergic + "</li>";
+                      str += "<li>家族史:" + data.patHisFamily + "</li>";
+                      str += "<li>建档日期:" + data.patRecordDate + "</li>";
+                      str += "<li>会员级别:" + data.patMemGrade + "</li>";
+                      str += "<li>病人证号:" + data.patCardNum + "</li>";
+                      str += "<li>费用类别:" + data.feeId + "</li>";
+                      right.innerHTML = str + "</ul>";
+                    }
+                  })
+                }
+              })
+            }
+            // 利用正则来检查病人是否正则接诊
+            let regTest = /接诊中/;
+            let a;
+            for (let i = 0; i < p.length; i++) {
+              if (regTest.test(p[i].innerHTML)) {
+                // 如果包含有文字,那么就渲染到左侧列表
+                a = p[i];
+              }
+            }
+            $.ajax({
+              url: 'http://www.qiuhang.club:7300/mock/5e202b0e00fbdf09dcf21f71/diagaosis/detail',
+              method: "POST",
+              header: "json",
+              data: '{"patientId":' + a.getAttribute("data-id") + '}',
+              dataType: "json",
+              success: function (data) {
+                console.log(data);
+                str = "<ul>";
+                str += "<li>姓名:" + data.patName + "</li>";
+                str += "<li>性别:" + data.patSex + "</li>";
+                str += "<li>出生年月:" + data.patBirthday + "</li>";
+                str += "<li>病人性质:" + data.natureId + "</li>";
+                str += "<li>身份证号:" + data.patIdentityNum + "</li>";
+                str += "<li>家庭住址:" + data.patFamAddress + "</li>";
+                str += "<li>家庭邮编:" + data.patPostcode + "</li>";
+                str += "<li>联系人电话:" + data.patContactPhone + "</li>";
+                str += "<li>联系人:" + data.patContacts + "</li>";
+                str += "<li>联系电话:" + data.patPhone + "</li>";
+                str += "<li>就职单位名称:" + data.patWorkUnit + "</li>";
+                str += "<li>职业:" + data.patWorkUnit + "</li>";
+                str += "<li>就职单位名称:" + data.patOperation + "</li>";
+                str += "<li>国籍:" + data.patCountry + "</li>";
+                str += "<li>民族:" + data.patNationality + "</li>";
+                str += "<li>婚姻状况:" + data.patMatrimony + "</li>";
+                str += "<li>既往史:" + data.patHisPrevious + "</li>";
+                str += "<li>过敏史:" + data.patHisAllergic + "</li>";
+                str += "<li>家族史:" + data.patHisFamily + "</li>";
+                str += "<li>建档日期:" + data.patRecordDate + "</li>";
+                str += "<li>会员级别:" + data.patMemGrade + "</li>";
+                str += "<li>病人证号:" + data.patCardNum + "</li>";
+                str += "<li>费用类别:" + data.feeId + "</li>";
+                right.innerHTML = str + "</ul>";
+              }
+            })
+          }
+
+        })
+
+      }
+    })
+  </script>
+</head>
+
+<body>
+  <h3>病人就诊信息</h3>
+  <div id="container">
+    <div id="left"></div>
+    <div id="right"></div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>就诊首页</title>
+  <style>
+    #container {
+      width: 850px;
+    }
+
+    #left {
+      border: 1px solid #090;
+      width: 223px;
+      float: left;
+      height: 530px;
+      margin-right: 5px;
+    }
+
+    #left p {
+      cursor: pointer;
+    }
+
+    #right {
+      border: 1px solid #66ceff;
+      width: 600px;
+      float: left;
+      height: 530px;
+    }
+  </style>
+  <script type="text/javascript" src="js/public.js"></script>
+
+  <script type="text/javascript">
+    $.addEvent({
+      elem: window,
+      eventType: "load",
+      func: function () {
+        var img1 = new Image();
+        img1.src = "img/qrCodeloading.gif";
+        var left = document.getElementById("left");
+        var right = document.getElementById("right");
+        left.appendChild(img1);
+        right.appendChild(img1.cloneNode(true));
+        var index = 0;
+        //onload加载左侧患者名单及诊疗状态
+        $.ajax({
+          url: "patient.php",
+          header: "json",
+          data: '{"hospitalId":"10001","stffId":"2002","departId":"201"}',
+          dataType: "json",
+          method: "POST",
+          success: function (data) {
+            var str = "";
+            data = data.data;
+            var regVisitedState = "";
+            for (var i = 0; i < data.length; i++) {
+              switch (data[i].regVisitedState) {
+                case 0:
+                  regVisitedState = "待诊";
+
+                  break;
+                case 1:
+                  regVisitedState = "接诊中";
+                  index = i;
+                  break;
+                case 2:
+                  regVisitedState = "接诊完成";
+                  break;
+
+              }
+
+              str += '<p data-id=' + data[i].id + '>' + data[i].patName + ' (' + regVisitedState + ')</p>';
+            }
+            left.innerHTML = str;
+
+          }, //ajax请求结束，调用complete回调函数，对患者名称，进行click事件绑定
+          complete: function () {
+            var p = left.getElementsByTagName("p");
+            for (var j = 0; j < p.length; j++) {
+              $.addEvent({
+                elem: p[j],
+                eventType: "click",
+                func: function () {
+                  $.ajax({
+                    url: "detial.php",
+                    method: "POST",
+                    headers: "json",
+                    data: '{"patientId":' + this.getAttribute("data-id") + '}',
+                    dataType: "json",
+                    success: function (data) {
+                      console.log(data);
+                      str = "<ul>";
+                      str += "<li>姓名:" + data.patName + "</li>";
+                      str += "<li>性别:" + data.patSex + "</li>";
+                      str += "<li>出生年月:" + data.patBirthday + "</li>";
+                      str += "<li>病人性质:" + data.natureId + "</li>";
+                      str += "<li>身份证号:" + data.patIdentityNum + "</li>";
+                      str += "<li>家庭住址:" + data.patFamAddress + "</li>";
+                      str += "<li>家庭邮编:" + data.patPostcode + "</li>";
+                      str += "<li>联系人电话:" + data.patContactPhone + "</li>";
+                      str += "<li>联系人:" + data.patContacts + "</li>";
+                      str += "<li>联系电话:" + data.patPhone + "</li>";
+                      str += "<li>就职单位名称:" + data.patWorkUnit + "</li>";
+                      str += "<li>职业:" + data.patWorkUnit + "</li>";
+                      str += "<li>就职单位名称:" + data.patOperation + "</li>";
+                      str += "<li>国籍:" + data.patCountry + "</li>";
+                      str += "<li>民族:" + data.patNationality + "</li>";
+                      str += "<li>婚姻状况:" + data.patMatrimony + "</li>";
+                      str += "<li>既往史:" + data.patHisPrevious + "</li>";
+                      str += "<li>过敏史:" + data.patHisAllergic + "</li>";
+                      str += "<li>家族史:" + data.patHisFamily + "</li>";
+                      str += "<li>建档日期:" + data.patRecordDate + "</li>";
+                      str += "<li>会员级别:" + data.patMemGrade + "</li>";
+                      str += "<li>病人证号:" + data.patCardNum + "</li>";
+                      str += "<li>费用类别:" + data.feeId + "</li>";
+                      right.innerHTML = str + "</ul>";
+                    },
+                    complete: function () {
+
+                    }
+
+                  });
+                }
+              });
+            }
+            //在患者列表加载完毕后，默认加载正在就诊患者详细信息
+            $.ajax({
+              url: "detial.php",
+              method: "POST",
+              headers: "json",
+              data: '{"patientId":' + p[index].getAttribute("data-id") + '}',
+              dataType: "json",
+              success: function (data) {
+                console.log(data);
+                str = "<ul>";
+                str += "<li>姓名:" + data.patName + "</li>";
+                str += "<li>性别:" + data.patSex + "</li>";
+                str += "<li>出生年月:" + data.patBirthday + "</li>";
+                str += "<li>病人性质:" + data.natureId + "</li>";
+                str += "<li>身份证号:" + data.patIdentityNum + "</li>";
+                str += "<li>家庭住址:" + data.patFamAddress + "</li>";
+                str += "<li>家庭邮编:" + data.patPostcode + "</li>";
+                str += "<li>联系人电话:" + data.patContactPhone + "</li>";
+                str += "<li>联系人:" + data.patContacts + "</li>";
+                str += "<li>联系电话:" + data.patPhone + "</li>";
+                str += "<li>就职单位名称:" + data.patWorkUnit + "</li>";
+                str += "<li>职业:" + data.patWorkUnit + "</li>";
+                str += "<li>就职单位名称:" + data.patOperation + "</li>";
+                str += "<li>国籍:" + data.patCountry + "</li>";
+                str += "<li>民族:" + data.patNationality + "</li>";
+                str += "<li>婚姻状况:" + data.patMatrimony + "</li>";
+                str += "<li>既往史:" + data.patHisPrevious + "</li>";
+                str += "<li>过敏史:" + data.patHisAllergic + "</li>";
+                str += "<li>家族史:" + data.patHisFamily + "</li>";
+                str += "<li>建档日期:" + data.patRecordDate + "</li>";
+                str += "<li>会员级别:" + data.patMemGrade + "</li>";
+                str += "<li>病人证号:" + data.patCardNum + "</li>";
+                str += "<li>费用类别:" + data.feeId + "</li>";
+                right.innerHTML = str + "</ul>";
+              },
+              complete: function () {
+
+              }
+
+            });
+          }
+        });
+
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <h3>病人就诊信息</h3>
+  <div id="container">
+
+    <div id="left"></div>
+    <div id="right"></div>
+  </div>
+</body>
+
+</html>
